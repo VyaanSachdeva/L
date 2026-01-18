@@ -1,0 +1,127 @@
+import tkinter as tk
+import turtle
+
+def build_pattern(axiom, rules, iterations):
+    current_string = axiom
+
+    for i in range(iterations):
+        new_string = ""
+        for character in current_string:
+            if character in rules:
+                new_string = new_string + rules[character]
+            else:
+                new_string = new_string + character
+        current_string = new_string
+
+    return current_string
+
+
+def draw_pattern(turtle_obj, command_string, angle, step):
+    stack = []
+    total_chars = len(command_string)
+
+    turtle.tracer(0, 0)
+
+    index = 0
+    for command in command_string:
+        progress = index / max(1, total_chars)
+        red = int(100 + 155 * progress)
+        green = int(200 * (1 - progress))
+        blue = int(100)
+
+        turtle_obj.pencolor(red, green, blue)
+
+        if command == "F":
+            turtle_obj.forward(step)
+
+        elif command == "+":
+            turtle_obj.right(angle)
+
+        elif command == "-":
+            turtle_obj.left(angle)
+
+        elif command == "[":
+            position = turtle_obj.position()
+            heading = turtle_obj.heading()
+            stack.append((position, heading))
+
+        elif command == "]":
+            saved_state = stack.pop()
+            turtle_obj.penup()
+            turtle_obj.setposition(saved_state[0])
+            turtle_obj.setheading(saved_state[1])
+            turtle_obj.pendown()
+
+        index = index + 1
+
+    turtle.update()
+
+def on_generate_click():
+    turtle_obj.clear()
+
+    turtle_obj.penup()
+    turtle_obj.setposition(0, -250)
+    turtle_obj.setheading(90)
+    turtle_obj.pendown()
+
+    axiom = axiom_entry.get()
+    angle = float(angle_entry.get())
+    iterations = int(iterations_entry.get())
+    step = float(step_entry.get())
+
+    rules = {}
+    rules_text = rules_entry.get()
+    rules_list = rules_text.split(",")
+
+    for rule in rules_list:
+        if ":" in rule:
+            parts = rule.split(":")
+            symbol = parts[0].strip()
+            replacement = parts[1].strip()
+            rules[symbol] = replacement
+
+    final_string = build_pattern(axiom, rules, iterations)
+    draw_pattern(turtle_obj, final_string, angle, step)
+
+window = tk.Tk()
+window.title("Beginner L-System Generator")
+
+canvas = tk.Canvas(window, width=800, height=600)
+canvas.grid(row=0, column=0, rowspan=6)
+
+screen = turtle.TurtleScreen(canvas)
+screen.colormode(255)
+
+turtle_obj = turtle.RawTurtle(screen)
+turtle_obj.speed(0)
+turtle_obj.hideturtle()
+
+tk.Label(window, text="Axiom").grid(row=0, column=1)
+axiom_entry = tk.Entry(window)
+axiom_entry.insert(0, "F")
+axiom_entry.grid(row=0, column=2)
+
+tk.Label(window, text="Rules (A:B,...)").grid(row=1, column=1)
+rules_entry = tk.Entry(window)
+rules_entry.insert(0, "F:F[+F]F[-F]F")
+rules_entry.grid(row=1, column=2)
+
+tk.Label(window, text="Angle").grid(row=2, column=1)
+angle_entry = tk.Entry(window)
+angle_entry.insert(0, "25")
+angle_entry.grid(row=2, column=2)
+
+tk.Label(window, text="Iterations").grid(row=3, column=1)
+iterations_entry = tk.Entry(window)
+iterations_entry.insert(0, "4")
+iterations_entry.grid(row=3, column=2)
+
+tk.Label(window, text="Step Length").grid(row=4, column=1)
+step_entry = tk.Entry(window)
+step_entry.insert(0, "6")
+step_entry.grid(row=4, column=2)
+
+generate_button = tk.Button(window, text="Generate", command=on_generate_click)
+generate_button.grid(row=5, column=1, columnspan=2)
+
+window.mainloop()
